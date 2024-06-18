@@ -2,16 +2,16 @@ import  { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const OptionsDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false); // State to track dropdown visibility
+    const [isOpen, setIsOpen] = useState(false); // State to track dropdown visibility
 
-  const handleToggleDropdown = () => {
-    setIsOpen(!isOpen); // Toggle dropdown visibility
-  };
+    const handleToggleDropdown = () => {
+      setIsOpen(!isOpen); // Toggle dropdown visibility
+    };
 
-  const handleOptionClick = (route) => {
-    console.log(`Navigating to ${route}`);
-    setIsOpen(false); // Close dropdown after an option is clicked
-  };
+    const handleOptionClick = (route) => {
+      console.log(`Navigating to ${route}`);
+      setIsOpen(false); // Close dropdown after an option is clicked
+    };
 
   return (
     <div className="flex justify-center items-center h-screen">

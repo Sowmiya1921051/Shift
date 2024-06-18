@@ -5,6 +5,9 @@ import Login from './components/Login';
 import Options from './components/Options';
 import Machine1 from './components/CNC01';
 import Machine2 from './components/CNC02'
+import Page1 from './components/Page1'
+import Page2 from './components/Page2'
+
 
 function App() {
 
@@ -15,8 +18,10 @@ function App() {
           <Route path='/' element={<Signup/>} />
           <Route path='/login' element={<Login/>}/>
           <Route path='/Options' element={<Options/>} />
-          <Route path='/page1' element={<Machine1/>} />
-          <Route path='/page2' element={<Machine2/>} />
+          {/* <Route path='/page11' element={<Machine1/>} />
+          <Route path='/page21' element={<Machine2/>} /> */}
+          <Route path='/page1' element={<Page1/>} />
+          <Route path='/page2' element={<Page2/>} />
       </Routes>
     </div>
   );

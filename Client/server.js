@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const User = require('./models/User');
+// const Shift = require('./models/Shift'); // Import the Shift model
 const app = express();
 const port = 3000; 
 
@@ -11,73 +11,171 @@ const mongoURI = 'mongodb://localhost:27017/Machine'; // Replace with your Mongo
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-    const db = mongoose.connection;
-    db.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+const db = mongoose.connection;
+db.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+db.once('open', () => {
+  console.log('Connected to MongoDB successfully');
+});
+
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
+
+const ShiftSchema = new mongoose.Schema({
+  shift: String,
+  targetQuantity: Number,
+  producedQuantity: Number,
+  efficiency: Number,
+});
+
+const Shift = mongoose.model('Shift', ShiftSchema);
+
+const DataSchema = new mongoose.Schema({
+  selectedMachine: String,
+  totalWorking: String,
+  day: String,
+  shift: String,
+  hours: [String],
+});
+
+const DataModel = mongoose.model('Data', DataSchema);
+
+module.exports = Shift;
+
+// Routes
+app.get('/', (req, res) => {
+  res.send('Hello World.💥..!');
+});
+
+app.post('/register', async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    const newUser = new User({ username, email, password });
+    await newUser.save();
+
+    console.log('User registered successfully with values:', { username, email, password });
+    res.status(201).json({ message: 'User registered successfully!' });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const user = await User.findOne({ username });
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: 'Username or password is incorrect' });
+    }
+
+    console.log('User logged in successfully with values:', { username, password });
+    res.status(200).json({ message: 'Login successful!' });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/saveShifts', async (req, res) => {
+  try {
+    const { previousShifts, currentShifts } = req.body;
+
+    const allShifts = [...previousShifts, ...currentShifts];
+
+    await Shift.insertMany(allShifts);
+
+    console.log('Shifts saved to the database');
+    res.status(200).json({ message: 'Shifts saved successfully' });
+  } catch (error) {
+    console.error('Error saving shifts:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.post('/api/machine1', async (req, res) => {
+  try {
+    const newData = new DataModel({
+      selectedMachine: req.body.selectedMachine,
+      totalWorking: req.body.totalWorking,
+      day: req.body.day,
+      shift: req.body.shift,
+      hours: req.body.hours,
     });
-    db.once('open', () => {
-      console.log('Connected to MongoDB successfully');
-    });
-    
-    // Middleware
-    app.use(cors());
-    app.use(bodyParser.json());
-    
-    // Routes
-    app.get('/', (req, res) => {
-      res.send('Hello World.💥..!');
-    });
-    
-    app.post('/register', async (req, res) => {
-      try {
-        const { username, email, password } = req.body;
-    
-        if (!username || !email || !password) {
-          return res.status(400).json({ message: 'All fields are required' });
-        }
-    
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-          return res.status(400).json({ message: 'Username already exists' });
-        }
-    
-        const newUser = new User({ username, email, password });
-        await newUser.save();
-    
-        console.log('User registered successfully with values:', { username, email, password });
-        res.status(201).json({ message: 'User registered successfully!' });
-      } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({ message: 'Server error' });
-      }
-    });
-    
-    app.post('/login', async (req, res) => {
-      try {
-        const { username, password } = req.body;
-    
-        if (!username || !password) {
-          return res.status(400).json({ message: 'All fields are required' });
-        }
-     
-        const user = await User.findOne({ username });
-        if (!user || user.password !== password) {
-          return res.status(401).json({ message: 'Username or password is incorrect' });
-        }
-    
-        console.log('User logged in successfully with values:', { username, password });
-        res.status(200).json({ message: 'Login successful!' });
-      } catch (error) {
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Server error' });
-      }
-    });
-    
+    await newData.save();
+    res.status(201).json({ message: 'Data saved successfully' });
+  } catch (error) {
+    console.error('Error saving data:', error);
+    res.status(500).json({ error: 'Failed to save data' });
+  }
+});
+
+
+// GET Endpoint to Retrieve Data
+app.get('/api/machine1', async (req, res) => {
+  try {
+    const data = await DataModel.find();
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ error: 'Failed to fetch data' });
+  }
+});
+
+
+app.put('/api/machine1/:id', async (req, res) => {
+  try {
+    const { selectedMachine, totalWorking, day, shift, hours } = req.body;
+
+    const updatedData = {
+      selectedMachine,
+      totalWorking,
+      day,
+      shift,
+      hours,
+    };
+
+    const updatedRecord = await DataModel.findByIdAndUpdate(
+      req.params.id,
+      updatedData,
+      { new: true }
+    );
+
+    if (!updatedRecord) {
+      return res.status(404).json({ message: 'Data not found' });
+    }
+
+    console.log('Data updated successfully:', updatedRecord);
+    res.status(200).json({ message: 'Data updated successfully', data: updatedRecord });
+  } catch (error) {
+    console.error('Error updating data:', error);
+    res.status(500).json({ error: 'Failed to update data' });
+  }
+});
+
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
