@@ -34,18 +34,87 @@ const ShiftSchema = new mongoose.Schema({
 });
 
 const Shift = mongoose.model('Shift', ShiftSchema);
+module.exports = Shift;
 
-const DataSchema = new mongoose.Schema({
+
+const machineDataSchema = new mongoose.Schema({
   selectedMachine: String,
-  totalWorking: String,
-  day: String,
   shift: String,
+  date: String, // Date stored as string
+  totalWorking: String,
   hours: [String],
+  status: String,
 });
 
-const DataModel = mongoose.model('Data', DataSchema);
+const MachineData = mongoose.model('MachineData', machineDataSchema);
 
-module.exports = Shift;
+// API endpoint to handle form submissions
+app.post('/api/machine-form', async (req, res) => {
+  const { selectedMachine, shift, hours, date, totalWorking, status } = req.body;
+
+  try {
+    const newMachineData = new MachineData({
+      selectedMachine,
+      shift,
+      date,
+      totalWorking,
+      hours,
+      status,
+    });
+
+    const savedMachineData = await newMachineData.save();
+    res.status(201).json({ message: 'Machine data saved successfully', _id: savedMachineData._id });
+  } catch (error) {
+    console.error('Error saving machine data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// API endpoint to update a specific hour in machine data
+app.put('/api/machine-form/:id/hour/:index', async (req, res) => {
+  const { id, index } = req.params;
+  const { hour } = req.body;
+
+  try {
+    const machineData = await MachineData.findById(id);
+    if (!machineData) {
+      return res.status(404).json({ error: 'Machine data not found' });
+    }
+
+    // Update the specific hour
+    machineData.hours[index] = hour;
+
+    // Check if all hours are filled
+    const allHoursFilled = machineData.hours.every(h => h !== '');
+    if (allHoursFilled) {
+      machineData.status = 'completed';
+    }
+
+    // Save the updated document
+    await machineData.save();
+    res.status(200).json({ message: 'Hour updated successfully', status: machineData.status });
+  } catch (error) {
+    console.error('Error updating hour:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/machine-form', async (req, res) => {
+  const { selectedMachine, status } = req.query;
+
+  try {
+    const machineData = await MachineData.findOne({ selectedMachine, status });
+    if (!machineData) {
+      return res.status(404).json({ error: 'Machine data not found' });
+    }
+
+    res.status(200).json(machineData);
+  } catch (error) {
+    console.error('Error fetching machine data:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // Routes
 app.get('/', (req, res) => {
@@ -114,65 +183,6 @@ app.post('/api/saveShifts', async (req, res) => {
 });
 
 
-app.post('/api/machine1', async (req, res) => {
-  try {
-    const newData = new DataModel({
-      selectedMachine: req.body.selectedMachine,
-      totalWorking: req.body.totalWorking,
-      day: req.body.day,
-      shift: req.body.shift,
-      hours: req.body.hours,
-    });
-    await newData.save();
-    res.status(201).json({ message: 'Data saved successfully' });
-  } catch (error) {
-    console.error('Error saving data:', error);
-    res.status(500).json({ error: 'Failed to save data' });
-  }
-});
-
-
-// GET Endpoint to Retrieve Data
-app.get('/api/machine1', async (req, res) => {
-  try {
-    const data = await DataModel.find();
-    res.status(200).json(data);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ error: 'Failed to fetch data' });
-  }
-});
-
-
-app.put('/api/machine1/:id', async (req, res) => {
-  try {
-    const { selectedMachine, totalWorking, day, shift, hours } = req.body;
-
-    const updatedData = {
-      selectedMachine,
-      totalWorking,
-      day,
-      shift,
-      hours,
-    };
-
-    const updatedRecord = await DataModel.findByIdAndUpdate(
-      req.params.id,
-      updatedData,
-      { new: true }
-    );
-
-    if (!updatedRecord) {
-      return res.status(404).json({ message: 'Data not found' });
-    }
-
-    console.log('Data updated successfully:', updatedRecord);
-    res.status(200).json({ message: 'Data updated successfully', data: updatedRecord });
-  } catch (error) {
-    console.error('Error updating data:', error);
-    res.status(500).json({ error: 'Failed to update data' });
-  }
-});
 
 
 // Start the server
