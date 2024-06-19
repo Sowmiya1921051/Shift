@@ -147,13 +147,10 @@ const MachineForm = () => {
 
       <div className="bg-pink-200 rounded-lg p-6 w-full max-w-md">
       <select
-        className="block appearance-none w-full bg-white border border-gray-300 
-                   hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
+        className="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline"
       >
-        <option>Option 1</option>
-        <option>Option 2</option>
-        <option>Option 3</option>
-        <option>Option 4</option>
+        <option>Machine 1</option>
+        <option>Machine 2</option>
       </select>
         <div className="grid grid-cols-2 gap-4">
           {formData.hours.map((hour, index) => (

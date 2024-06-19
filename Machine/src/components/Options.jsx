@@ -49,7 +49,7 @@ const OptionsDropdown = () => {
             aria-labelledby="options-menu"
           >
             <div className="py-1">
-              <Link to="/page1">
+              <Link to="/hour">
                 <button
                   onClick={() => handleOptionClick('/page1')}
                   className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
