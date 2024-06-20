@@ -36,84 +36,164 @@ const ShiftSchema = new mongoose.Schema({
 const Shift = mongoose.model('Shift', ShiftSchema);
 module.exports = Shift;
 
+app.use(bodyParser.json());
 
 const machineDataSchema = new mongoose.Schema({
   selectedMachine: String,
   shift: String,
-  date: String, // Date stored as string
+  date: String,
   totalWorking: String,
   hours: [String],
+  completedHours: [Number], // Array to store indices of completed hours
   status: String,
 });
 
 const MachineData = mongoose.model('MachineData', machineDataSchema);
 
-// API endpoint to handle form submissions
-app.post('/api/machine-form', async (req, res) => {
-  const { selectedMachine, shift, hours, date, totalWorking, status } = req.body;
+// GET endpoint to fetch existing machine data by selectedMachine
+app.get('/api/machineData', async (req, res) => {
+  const { selectedMachine } = req.query;
 
   try {
-    const newMachineData = new MachineData({
-      selectedMachine,
-      shift,
-      date,
-      totalWorking,
-      hours,
-      status,
-    });
-
-    const savedMachineData = await newMachineData.save();
-    res.status(201).json({ message: 'Machine data saved successfully', _id: savedMachineData._id });
+    const machineData = await MachineData.findOne({ selectedMachine });
+    res.json(machineData);
   } catch (error) {
-    console.error('Error saving machine data:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error fetching machine data:', error);
+    res.status(500).send('Error fetching machine data');
+  }
+});
+
+// POST endpoint to create or update machine data
+app.post('/api/machineData', async (req, res) => {
+  const { selectedMachine, shift, date, totalWorking, hours } = req.body;
+
+  try {
+    let machineData = await MachineData.findOne({ selectedMachine });
+
+    if (machineData) {
+      // Update existing machine data
+      machineData.shift = shift;
+      machineData.date = date;
+      machineData.totalWorking = totalWorking;
+      machineData.hours = hours;
+
+      machineData.completedHours = hours.reduce((acc, hour, index) => {
+        if (hour !== '') {
+          acc.push(index);
+        }
+        return acc;
+      }, []);
+
+      machineData.status = machineData.completedHours.length === 8 ? 'Completed' : 'Active';
+
+      await machineData.save();
+      res.status(200).send('Machine data updated successfully');
+    } else {
+      // Create new machine data entry
+      const newMachineData = new MachineData({
+        selectedMachine,
+        shift,
+        date,
+        totalWorking,
+        hours,
+        completedHours: hours.reduce((acc, hour, index) => {
+          if (hour !== '') {
+            acc.push(index);
+          }
+          return acc;
+        }, []),
+        status: hours.length === 8 && hours.every(hour => hour !== '') ? 'Completed' : 'Active',
+      });
+
+      await newMachineData.save();
+      res.status(201).send('Machine data saved successfully');
+    }
+  } catch (error) {
+    console.error('Error saving or updating machine data:', error);
+    res.status(400).send('Error saving or updating machine data');
+  }
+});
+
+// PUT endpoint to update existing machine data by ID
+app.put('/api/machineData/:id', async (req, res) => {
+  const { id } = req.params;
+  const { selectedMachine, shift, date, totalWorking, hours } = req.body;
+
+  try {
+    const updatedMachineData = await MachineData.findByIdAndUpdate(
+      id,
+      {
+        selectedMachine,
+        shift,
+        date,
+        totalWorking,
+        hours,
+        completedHours: hours.reduce((acc, hour, index) => {
+          if (hour !== '') {
+            acc.push(index);
+          }
+          return acc;
+        }, []),
+        status: hours.length === 8 && hours.every(hour => hour !== '') ? 'Completed' : 'Active',
+      },
+      { new: true }
+    );
+
+    if (updatedMachineData) {
+      res.status(200).send('Machine data updated successfully');
+    } else {
+      res.status(404).send('Machine data not found');
+    }
+  } catch (error) {
+    console.error('Error updating machine data:', error);
+    res.status(400).send('Error updating machine data');
   }
 });
 
 // API endpoint to update a specific hour in machine data
-app.put('/api/machine-form/:id/hour/:index', async (req, res) => {
-  const { id, index } = req.params;
-  const { hour } = req.body;
+// app.put('/api/machine-form/:id/hour/:index', async (req, res) => {
+//   const { id, index } = req.params;
+//   const { hour } = req.body;
 
-  try {
-    const machineData = await MachineData.findById(id);
-    if (!machineData) {
-      return res.status(404).json({ error: 'Machine data not found' });
-    }
+//   try {
+//     const machineData = await MachineData.findById(id);
+//     if (!machineData) {
+//       return res.status(404).json({ error: 'Machine data not found' });
+//     }
 
-    // Update the specific hour
-    machineData.hours[index] = hour;
+//     // Update the specific hour
+//     machineData.hours[index] = hour;
 
-    // Check if all hours are filled
-    const allHoursFilled = machineData.hours.every(h => h !== '');
-    if (allHoursFilled) {
-      machineData.status = 'completed';
-    }
+//     // Check if all hours are filled
+//     const allHoursFilled = machineData.hours.every(h => h !== '');
+//     if (allHoursFilled) {
+//       machineData.status = 'completed';
+//     }
 
-    // Save the updated document
-    await machineData.save();
-    res.status(200).json({ message: 'Hour updated successfully', status: machineData.status });
-  } catch (error) {
-    console.error('Error updating hour:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+//     // Save the updated document
+//     await machineData.save();
+//     res.status(200).json({ message: 'Hour updated successfully', status: machineData.status });
+//   } catch (error) {
+//     console.error('Error updating hour:', error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
 
-app.get('/api/machine-form', async (req, res) => {
-  const { selectedMachine, status } = req.query;
+// app.get('/api/machine-form', async (req, res) => {
+//   const { selectedMachine, status } = req.query;
 
-  try {
-    const machineData = await MachineData.findOne({ selectedMachine, status });
-    if (!machineData) {
-      return res.status(404).json({ error: 'Machine data not found' });
-    }
+//   try {
+//     const machineData = await MachineData.findOne({ selectedMachine, status });
+//     if (!machineData) {
+//       return res.status(404).json({ error: 'Machine data not found' });
+//     }
 
-    res.status(200).json(machineData);
-  } catch (error) {
-    console.error('Error fetching machine data:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
+//     res.status(200).json(machineData);
+//   } catch (error) {
+//     console.error('Error fetching machine data:', error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
 
 
 // Routes
