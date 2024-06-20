@@ -38,24 +38,26 @@ module.exports = Shift;
 
 app.use(bodyParser.json());
 
+// Define schema and model
 const machineDataSchema = new mongoose.Schema({
   selectedMachine: String,
   shift: String,
-  date: String,
+  date: String, // Date stored as string
   totalWorking: String,
   hours: [String],
-  completedHours: [Number], // Array to store indices of completed hours
   status: String,
 });
 
+machineDataSchema.index({ selectedMachine: 1, shift: 1, date: 1 }); 
+
 const MachineData = mongoose.model('MachineData', machineDataSchema);
 
-// GET endpoint to fetch existing machine data by selectedMachine
+// GET endpoint to fetch existing machine data by selectedMachine and shift
 app.get('/api/machineData', async (req, res) => {
-  const { selectedMachine } = req.query;
+  const { selectedMachine, shift } = req.query;
 
   try {
-    const machineData = await MachineData.findOne({ selectedMachine });
+    const machineData = await MachineData.findOne({ selectedMachine, shift });
     res.json(machineData);
   } catch (error) {
     console.error('Error fetching machine data:', error);
@@ -68,22 +70,22 @@ app.post('/api/machineData', async (req, res) => {
   const { selectedMachine, shift, date, totalWorking, hours } = req.body;
 
   try {
-    let machineData = await MachineData.findOne({ selectedMachine });
+    // Check if machine data already exists for the selected machine, shift, and date
+    let machineData = await MachineData.findOne({ selectedMachine, shift, date });
 
     if (machineData) {
       // Update existing machine data
-      machineData.shift = shift;
+      machineData.shift = shift; 
       machineData.date = date;
       machineData.totalWorking = totalWorking;
       machineData.hours = hours;
-
       machineData.completedHours = hours.reduce((acc, hour, index) => {
         if (hour !== '') {
           acc.push(index);
         }
         return acc;
       }, []);
-
+      
       machineData.status = machineData.completedHours.length === 8 ? 'Completed' : 'Active';
 
       await machineData.save();
@@ -102,8 +104,10 @@ app.post('/api/machineData', async (req, res) => {
           }
           return acc;
         }, []),
-        status: hours.length === 8 && hours.every(hour => hour !== '') ? 'Completed' : 'Active',
+        status: 'Active',
       });
+
+      newMachineData.status = newMachineData.completedHours.length === 8 ? 'Completed' : 'Active';
 
       await newMachineData.save();
       res.status(201).send('Machine data saved successfully');
@@ -134,7 +138,7 @@ app.put('/api/machineData/:id', async (req, res) => {
           }
           return acc;
         }, []),
-        status: hours.length === 8 && hours.every(hour => hour !== '') ? 'Completed' : 'Active',
+        status: hours.every(hour => hour !== '') ? 'Completed' : 'Active',
       },
       { new: true }
     );

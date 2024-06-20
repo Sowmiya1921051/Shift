@@ -13,9 +13,10 @@ const MachineForm = () => {
 
   useEffect(() => {
     const fetchMachineData = async () => {
-      if (formData.selectedMachine) {
+      const { selectedMachine, shift } = formData;
+      if (selectedMachine && shift) {
         try {
-          const response = await fetch(`http://localhost:3000/api/machineData?selectedMachine=${formData.selectedMachine}`);
+          const response = await fetch(`http://localhost:3000/api/machineData?selectedMachine=${selectedMachine}&shift=${shift}`);
           if (response.ok) {
             const data = await response.json();
             if (data && data.status !== 'Completed') {
@@ -26,6 +27,15 @@ const MachineForm = () => {
                 date: data.date,
                 hours: data.hours,
                 status: data.status,
+              });
+            } else {
+              setFormData({
+                selectedMachine,
+                shift,
+                totalWorking: '',
+                date: '',
+                hours: Array(8).fill(''),
+                status: '',
               });
             }
           } else {
@@ -38,7 +48,7 @@ const MachineForm = () => {
     };
 
     fetchMachineData();
-  }, [formData.selectedMachine]);
+  }, [formData.selectedMachine, formData.shift]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -190,3 +200,4 @@ const MachineForm = () => {
 };
 
 export default MachineForm;
+
