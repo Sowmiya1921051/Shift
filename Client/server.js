@@ -39,42 +39,6 @@ module.exports = Shift;
 app.use(bodyParser.json());
 
 
-
-
-// // Define a schema and model
-// const formSchema = new mongoose.Schema({
-//   machine: String,
-//   shift: String,
-//   date: String,
-//   totalWorking: String,
-//   status: { type: String, enum: ['active', 'completed'], default: 'active' } 
-// });
-
-// const Form = mongoose.model('Form', formSchema);
-
-// // Routes
-// app.post('/submit', async (req, res) => {
-//   try {
-//     const formData = new Form(req.body);
-//     const savedForm = await formData.save();
-//     res.status(200).send(savedForm);
-//   } catch (err) {
-//     res.status(500).send(err);
-//   }
-// });
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Utility function to get current time in IST
 const getCurrentIST = () => {
   const date = new Date();
@@ -119,15 +83,14 @@ const machineSchema = new mongoose.Schema({
     default: 'Incomplete',
   },
   createdAt: {
-    type: String, // Change type to String to store formatted date as a string
+    type: String,
     default: getCurrentIST,
   },
   updatedAt: {
-    type: String, // Change type to String to store formatted date as a string
+    type: String,
     default: getCurrentIST,
   },
 });
-
 
 machineSchema.pre('save', function (next) {
   this.updatedAt = getCurrentIST();
@@ -138,6 +101,21 @@ machineSchema.pre('save', function (next) {
 });
 
 const Machine = mongoose.model('Machine', machineSchema);
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Example route to fetch all machines
+app.get('/api/machines', async (req, res) => {
+  try {
+    const machines = await Machine.find();
+    res.json(machines);
+  } catch (error) {
+    console.error('Error fetching machines:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // POST endpoint to create or update a machine document
 app.post('/api/machines', async (req, res) => {
