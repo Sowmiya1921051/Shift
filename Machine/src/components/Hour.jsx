@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const MachineForm = () => {
   const hours = Array.from({ length: 8 }, (_, i) => i + 1);
@@ -8,101 +9,68 @@ const MachineForm = () => {
     totalWorking: '',
     date: '',
     hours: Array(8).fill(''),
-    status: '',
+    status: 'Incomplete',
   });
 
   useEffect(() => {
-    const fetchMachineData = async () => {
-      const { selectedMachine, shift } = formData;
-      if (selectedMachine && shift) {
-        try {
-          const response = await fetch(`http://localhost:3000/api/machineData?selectedMachine=${selectedMachine}&shift=${shift}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.status !== 'Completed') {
-              setFormData({
-                selectedMachine: data.selectedMachine,
-                shift: data.shift,
-                totalWorking: data.totalWorking,
-                date: data.date,
-                hours: data.hours,
-                status: data.status,
-              });
-            } else {
-              setFormData({
-                selectedMachine,
-                shift,
-                totalWorking: '',
-                date: '',
-                hours: Array(8).fill(''),
-                status: '',
-              });
-            }
-          } else {
-            console.error('Failed to fetch machine data');
-          }
-        } catch (error) {
-          console.error('Error fetching machine data:', error);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3000/api/machines/${formData.selectedMachine}/${formData.shift}`);
+        const machineData = response.data;
+        if (machineData) {
+          setFormData(machineData); // Update formData with fetched data
         }
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchMachineData();
+    if (formData.selectedMachine && formData.shift) {
+      fetchData();
+    }
   }, [formData.selectedMachine, formData.shift]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
       [name]: value,
     }));
   };
 
   const handleHourChange = (index, value) => {
-    setFormData((prevData) => {
+    setFormData(prevData => {
       const newHours = [...prevData.hours];
       newHours[index] = value;
-      return { ...prevData, hours: newHours };
+
+      const newStatus = newHours.every(hour => hour !== '') ? 'Complete' : 'Incomplete';
+
+      return { ...prevData, hours: newHours, status: newStatus };
     });
   };
 
   const handleAdd = async () => {
-    const { selectedMachine, shift, totalWorking, date, hours } = formData;
-
     try {
-      const response = await fetch('http://localhost:3000/api/machineData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          selectedMachine,
-          shift,
-          totalWorking,
-          date,
-          hours,
-        }),
+      const response = await axios.post('http://localhost:3000/api/machines', formData);
+      console.log('Server response:', response.data);
+      alert('Form submitted successfully!');
+      
+      setFormData({
+        selectedMachine: '',
+        shift: '',
+        totalWorking: '',
+        date: '',
+        hours: Array(8).fill(''),
+        status: 'Incomplete',
       });
-
-      if (response.ok) {
-        const result = await response.text();
-        alert(result);
-        setFormData({
-          selectedMachine: '',
-          shift: '',
-          totalWorking: '',
-          date: '',
-          hours: Array(8).fill(''),
-          status: '',
-        });
-      } else {
-        alert('Failed to submit data');
-      }
     } catch (error) {
-      console.error('Error submitting data:', error);
+      console.error('Error submitting form:', error);
+      alert('Failed to submit form. Please try again.');
     }
   };
+  
 
+  
   return (
     <div className="max-w-4xl mx-auto mt-8 flex flex-col lg:flex-row justify-center space-y-6 lg:space-y-0 lg:space-x-6">
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
@@ -168,36 +136,36 @@ const MachineForm = () => {
               onChange={handleChange}
             />
           </div>
-
-          <div className="grid grid-cols-1 gap-4">
-            {hours.map((hour, index) => (
-              <div key={hour} className="flex items-center space-x-2">
-                <label className="block text-gray-700 text-sm font-bold text-center w-20">{`Hour - ${hour}`}</label>
-                <input
-                  className="shadow appearance-none text-center border rounded flex-grow py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  type="text"
-                  placeholder={`Hour ${hour}`}
-                  value={formData.hours[index]}
-                  onChange={(e) => handleHourChange(index, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-
-          <div className="flex justify-center mt-4">
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              type="button"
-              onClick={handleAdd}
-            >
-              Add
-            </button>
-          </div>
         </form>
+        <div className="flex justify-center mt-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            type="button"
+            onClick={handleAdd}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
+        <div className="grid grid-cols-1 gap-4">
+          {hours.map((hour, index) => (
+            <div key={hour} className="flex items-center space-x-2">
+              <label className="block text-gray-700 text-sm font-bold text-center w-20">{`Hour - ${hour}`}</label>
+              <input
+                className="shadow appearance-none text-center border rounded flex-grow py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
+                placeholder={`Hour ${hour}`}
+                value={formData.hours[index]}
+                onChange={(e) => handleHourChange(index, e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 };
 
 export default MachineForm;
-

@@ -8,6 +8,7 @@ import Machine2 from './components/CNC02'
 import Page1 from './components/Page1'
 import Page2 from './components/Page2'
 import Hour from './components/Hour';
+import Hour1 from './components/Hour1'
 
 function App() {
 
@@ -23,6 +24,7 @@ function App() {
           <Route path='/page1' element={<Page1/>} />
           <Route path='/page2' element={<Page2/>} />
           <Route path='/hour' element={<Hour/>} />
+          <Route path='/hour1' element={<Hour1/>} />
       </Routes>
     </div>
   );
