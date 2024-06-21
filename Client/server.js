@@ -75,8 +75,39 @@ app.use(bodyParser.json());
 
 
 
+// Utility function to get current time in IST
+const getCurrentIST = () => {
+  const date = new Date();
 
-// Define Schema and Model (Assuming you have a Machine schema)
+  // Calculate the IST time by adjusting the UTC time
+  const utcOffset = date.getTimezoneOffset() * 60000; // getTimezoneOffset returns the offset in minutes
+  const istOffset = 5.5 * 60 * 60 * 1000; // IST offset in milliseconds
+
+  const istDate = new Date(date.getTime() + utcOffset + istOffset);
+
+  // Format time in 12-hour format with AM/PM
+  const formattedTime = istDate.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+  });
+
+  // Concatenate formatted time with IST date
+  const ISTTime = `${istDate.toDateString()} ${formattedTime}`;
+
+  // Log the IST time to the console
+  console.log("Current IST Time:", ISTTime);
+
+  return ISTTime;
+};
+
+// Example usage
+getCurrentIST();
+
+
+
+// Define Schema and Model
 const machineSchema = new mongoose.Schema({
   selectedMachine: String,
   shift: String,
@@ -85,15 +116,30 @@ const machineSchema = new mongoose.Schema({
   hours: [String],
   status: {
     type: String,
-    default: 'Incomplete', // Default status
+    default: 'Incomplete',
+  },
+  createdAt: {
+    type: String, // Change type to String to store formatted date as a string
+    default: getCurrentIST,
+  },
+  updatedAt: {
+    type: String, // Change type to String to store formatted date as a string
+    default: getCurrentIST,
   },
 });
 
 
+machineSchema.pre('save', function (next) {
+  this.updatedAt = getCurrentIST();
+  if (this.isNew) {
+    this.createdAt = getCurrentIST();
+  }
+  next();
+});
+
 const Machine = mongoose.model('Machine', machineSchema);
 
-// Assuming you have already defined your machineSchema and Machine model
-
+// POST endpoint to create or update a machine document
 app.post('/api/machines', async (req, res) => {
   const { selectedMachine, shift, totalWorking, date, hours } = req.body;
 
@@ -107,7 +153,7 @@ app.post('/api/machines', async (req, res) => {
         existingMachine.totalWorking = totalWorking;
         existingMachine.date = date;
         existingMachine.hours = hours;
-        
+
         // Calculate status based on filled hours
         const completedHours = hours.filter(hour => hour !== '').length;
         existingMachine.status = completedHours === 8 ? 'Complete' : 'Incomplete';
@@ -148,8 +194,7 @@ app.post('/api/machines', async (req, res) => {
   }
 });
 
-
-
+// GET endpoint to retrieve a machine document with 'Incomplete' status
 app.get('/api/machines/:selectedMachine/:shift', async (req, res) => {
   const { selectedMachine, shift } = req.params;
 
@@ -160,9 +205,13 @@ app.get('/api/machines/:selectedMachine/:shift', async (req, res) => {
     }
     res.json(machine);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Error retrieving machine:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
 
 
 
