@@ -1,5 +1,3 @@
-// src/MachineList.js
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
@@ -11,7 +9,7 @@ function MachineList() {
   const [error, setError] = useState(null);
   const [selectedMachineFilter, setSelectedMachineFilter] = useState('');
   const [shiftFilter, setShiftFilter] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date()); // State to store selected date
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     const fetchMachines = async () => {
@@ -21,7 +19,7 @@ function MachineList() {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching machines:', error);
-        setError('Error fetching data'); // Handle error state
+        setError('Error fetching data');
         setLoading(false);
       }
     };
@@ -29,7 +27,6 @@ function MachineList() {
     fetchMachines();
   }, []);
 
-  // Function to handle filter change
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
     if (name === 'selectedMachine') {
@@ -39,12 +36,10 @@ function MachineList() {
     }
   };
 
-  // Function to handle date change
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
-  // Apply filters and get filtered machines
   const filteredMachines = machines.filter((machine) => {
     if (selectedMachineFilter && machine.selectedMachine !== selectedMachineFilter) {
       return false;
@@ -59,14 +54,13 @@ function MachineList() {
   });
 
   if (loading) {
-    return <div>Loading...</div>; // Render loading state while fetching data
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return <div>Error: {error}</div>; // Render error message if fetch fails
+    return <div>Error: {error}</div>;
   }
 
-  // Function to group machines by selectedMachine and shift
   const groupedMachines = filteredMachines.reduce((acc, machine) => {
     const key = `${machine.selectedMachine}_${machine.shift}`;
     if (!acc[key]) {
@@ -77,10 +71,9 @@ function MachineList() {
   }, {});
 
   return (
-    <div className="container mx-auto mt-8">
+    <div className="container mx-auto mt-8 border-2 border-gray-300 p-4">
       <h1 className="text-2xl font-bold mb-4">List of Machines</h1>
 
-      {/* Filter Options */}
       <div className="flex mb-4 space-x-4">
         <div>
           <label className="block font-medium">Select Machine:</label>
@@ -91,10 +84,8 @@ function MachineList() {
             className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           >
             <option value="">All Machines</option>
-            {/* Replace with actual machine options fetched from backend if needed */}
             <option value="Machine 1">Machine 1</option>
             <option value="Machine 2">Machine 2</option>
-            {/* Add more options as needed */}
           </select>
         </div>
 
@@ -109,7 +100,6 @@ function MachineList() {
             <option value="">All Shifts</option>
             <option value="Morning">Morning</option>
             <option value="Evening">Evening</option>
-            {/* Add more options as needed */}
           </select>
         </div>
 
@@ -128,41 +118,52 @@ function MachineList() {
         </div>
       </div>
 
-      {/* Render filtered and grouped machines */}
       {Object.keys(groupedMachines).map((groupKey, groupIndex) => {
         const [selectedMachine, shift] = groupKey.split('_');
+        const targetQuality = groupedMachines[groupKey][0]?.totalWorking || 0; // Get the target quality
+        const targetQualityPerHour = parseFloat((targetQuality / 8).toFixed(2)); // Calculate target quality per hour
+
         return (
-          <div key={groupKey} className={`mb-8 ${groupIndex > 0 ? 'mt-8' : ''}`}>
+          <div key={groupKey} className={`mb-8 ${groupIndex > 0 ? 'mt-8' : ''} border-2 border-gray-400 p-4`}>
             <h2 className="text-xl font-semibold mb-4">{selectedMachine} - {shift}</h2>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 border">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Shift
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Target Quality
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Produced Quality
+                    </th>
+                    {/* <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
                       Date
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Working
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
                       Status
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {groupedMachines[groupKey].map((machine, index) => (
                     <tr key={machine._id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{machine.date}</div>
+                      <td className="px-6 py-4 whitespace-nowrap border">
+                        <div className="text-sm text-gray-900">{machine.selectedMachine}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap border">
                         <div className="text-sm text-gray-900">{machine.totalWorking}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap border">
+                        <div className="text-sm text-gray-900">{machine.date}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap border">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${machine.status === 'Complete' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {machine.status}
                         </span>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
@@ -170,28 +171,65 @@ function MachineList() {
             </div>
             <h3 className="text-lg font-semibold mt-4 mb-2">Hour Details</h3>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200 border">
                 <thead className="bg-gray-50">
                   <tr>
-                    {Array.from({ length: 8 }, (_, index) => (
-                      <th key={index} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Hour {index + 1}
-                      </th>
-                    ))}
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Current Shift
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                     {targetQuality}
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                     
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {groupedMachines[groupKey].map((machine) => (
-                    <tr key={`${machine._id}-hours`} className="bg-gray-50">
-                      {machine.hours.map((hour, index) => (
-                        <td key={index} className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{hour}</div>
-                        </td>
-                      ))}
-                    </tr>
+                    machine.hours.map((hour, index) => {
+                      const percentage = parseFloat(((hour / targetQualityPerHour) * 100).toFixed(2)); // Calculate percentage of target quality for the hour
+                      return (
+                        <tr key={`${machine._id}-hour-${index}`} className="bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="text-sm text-gray-900">Hour {index + 1}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="text-sm text-gray-900">{targetQualityPerHour}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="text-sm text-gray-900">{hour}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="text-sm text-gray-900">{percentage} %</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="flex items-center justify-center h-6 w-6 rounded-full">
+                              <div
+                                className="h-full w-full rounded-full"
+                                style={{
+                                  backgroundColor:
+                                    percentage >= 80
+                                      ? '#10B981' // Green color
+                                      : percentage >= 70
+                                        ? '#F59E0B' // Yellow color
+                                        : '#EF4444' // Red color
+                                }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ))}
                 </tbody>
-              </table>
+              </table >
             </div>
           </div>
         );
@@ -201,3 +239,4 @@ function MachineList() {
 }
 
 export default MachineList;
+
