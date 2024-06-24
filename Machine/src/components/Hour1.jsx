@@ -139,6 +139,12 @@ function MachineList() {
                     <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
                       Produced Quality
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Efficiency
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
+                      Remark
+                    </th>
                     {/* <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
                       Date
                     </th>
@@ -148,27 +154,66 @@ function MachineList() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {groupedMachines[groupKey].map((machine, index) => (
-                    <tr key={machine._id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
-                      <td className="px-6 py-4 whitespace-nowrap border">
-                        <div className="text-sm text-gray-900">{machine.selectedMachine}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap border">
-                        <div className="text-sm text-gray-900">{machine.totalWorking}</div>
-                      </td>
-                      {/* <td className="px-6 py-4 whitespace-nowrap border">
-                        <div className="text-sm text-gray-900">{machine.date}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap border">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${machine.status === 'Complete' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {machine.status}
-                        </span>
-                      </td> */}
-                    </tr>
-                  ))}
+                  {groupedMachines[groupKey].map((machine, index) => {
+                    // Filter out non-zero hours
+                    const workedHours = machine.hours.filter(hour => parseInt(hour) > 0);
+                    // Calculate produced quality
+                    const producedQuality = workedHours.length > 0 ? workedHours.reduce((sum, hour) => sum + parseInt(hour), 0) : 0;
+                    // Calculate efficiency as a percentage without decimal points
+                    const efficiency = machine.totalWorking > 0 ? Math.round((producedQuality / machine.totalWorking) * 100) : 0;
+
+                    return (
+                      <tr key={machine._id} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
+                        {/* Other table cells */}
+                        <td className="px-6 py-4 whitespace-nowrap border">
+                          <div className="text-sm text-gray-900">{machine.selectedMachine}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap border">
+                          <div className="text-sm text-gray-900">{machine.totalWorking}</div>
+                        </td>
+                        {/* Calculate produced quantity from worked hours */}
+                        <td className="px-6 py-4 whitespace-nowrap border">
+                          <div className="text-sm text-gray-900">
+                            {producedQuality}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap border">
+                          <div className="text-sm text-gray-900">
+                            {efficiency}%
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap border">
+                            <div className="flex items-center justify-center h-6 w-6 rounded-full">
+                              <div
+                                className="h-full w-full rounded-full"
+                                style={{
+                                  backgroundColor:
+                                    efficiency >= 80
+                                      ? '#10B981' // Green color
+                                      : efficiency >= 70
+                                        ? '#F59E0B' // Yellow color
+                                        : '#EF4444' // Red color
+                                }}
+                              />
+                            </div>
+                          </td>
+                        {/* 
+      <td className="px-6 py-4 whitespace-nowrap border">
+        <div className="text-sm text-gray-900">{machine.date}</div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap border">
+        <span className={px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${machine.status === 'Complete' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}}>
+          {machine.status}
+        </span>
+      </td> 
+      */}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+
             <h3 className="text-lg font-semibold mt-4 mb-2">Hour Details</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 border">
@@ -178,13 +223,13 @@ function MachineList() {
                       Current Shift
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
-                     {targetQuality}
+                      {targetQuality}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
                       
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
-                     
+
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-lg font-bold text-black uppercase tracking-wider border">
 
