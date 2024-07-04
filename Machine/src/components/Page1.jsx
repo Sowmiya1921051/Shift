@@ -51,7 +51,7 @@ const MachineForm = () => {
 
   const handleAdd = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/api/machines', formData);
+      const response = await axios.post('https://shift-2.onrender.com/api/machines', formData);
       console.log('Server response:', response.data);
       alert('Form submitted successfully!');
       
