@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const MachineForm = () => {
@@ -15,7 +15,7 @@ const MachineForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/machines/${formData.selectedMachine}/${formData.shift}`);
+        const response = await axios.get(`http://localhost/api/machines/${formData.selectedMachine}/${formData.shift}`);
         const machineData = response.data;
         if (machineData) {
           setFormData(machineData);
@@ -51,7 +51,7 @@ const MachineForm = () => {
 
   const handleAdd = async () => {
     try {
-      const response = await axios.post('https://shift-2.onrender.com/api/machines', formData);
+      const response = await axios.post('http://localhost:3000/api/machines', formData);
       console.log('Server response:', response.data);
       alert('Form submitted successfully!');
       

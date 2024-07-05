@@ -319,7 +319,7 @@ const getCurrentIST = () => {
   });
   const ISTTime = `${istDate.toDateString()} ${formattedTime}`;
   console.log("Current IST Time:", ISTTime);
-  return ISTTime;
+  return ISTTime; 
 };
 
 // Define Schema and Model
@@ -426,6 +426,7 @@ app.get('/api/machines/:selectedMachine/:shift', async (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server running on ${process.env.BASE_URL}:${port}`);
+  console.log(`Server running on port ${port}`);
 });
 
+ 
