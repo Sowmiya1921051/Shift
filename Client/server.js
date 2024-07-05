@@ -427,6 +427,7 @@ app.get('/api/machines/:selectedMachine/:shift', async (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Server running at https://localhost:${port}`);
 });
 
  
