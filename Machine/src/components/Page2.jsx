@@ -14,7 +14,7 @@ function MachineList() {
   useEffect(() => {
     const fetchMachines = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/machines'); // Adjust URL as per your backend API endpoint
+        const response = await axios.get('https://localhost:3000/api/machines'); // Adjust URL as per your backend API endpoint
         setMachines(response.data);
         setLoading(false);
       } catch (error) {
